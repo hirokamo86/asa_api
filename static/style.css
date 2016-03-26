@@ -1,0 +1,14 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+table {
+	border-collapse: collapse;
+	text-align: left;
+}
+
+table tr th, table tr td {
+	border: 1px solid #ccc;
+	padding: 0.25em;
+}

@@ -4,27 +4,51 @@
 <html>
 <head>
 	<title>ASA REST API demo page</title>
+	<link rel="stylesheet" href="{% static 'style.css' %}"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<script type="text/javascript" src="{% static 'script.js' %}"></script>
 </head>
 
 <body>
 	<div>
-		<h2>ASA IP Address: {{ ip_address }}</h2><br>
+		<h2>ASA IP Address: {{ ip_address }}</h2>
+		<br>
+		
+		<h3>Outside Interface ACL</h3>
 		<div>
 			<table>
 				<tr>
-					<th>line#</th>
-					<th>permit</th>
+					<th>Line#</th>
+					<th>Access</th>
 					<th>Src</th>
 					<th>Dst</th>
 				</tr>
-			{% for ace in ace_dict.items %}
+			{% for ace in outside_ace_dict.items %}
 				<tr>
 					<th>{{ace.position}}</th>
 					<th>{% if ace.permit %}permit{% else %}{% if not ace.permit %}deny{% endif %}{% endif %}</th>
 					<th>{{ace.sourceService.value}} {{ace.sourceAddress.value}}</th>
-					<th>{{ace.destinationService.value}} {{ace.destinationAddress.value}}</th>
+					<th>{{ace.destinationService.value}} {% if ace.destinationAddress.value %}{{ace.destinationAddress.value}}{% else %}{% if ace.destinationAddress.objectId %}{{ace.destinationAddress.objectId}}{% endif %}{% endif %}</th>
 				</tr>
 			{% endfor %}
+			</table>
+		</div>
+		<br>
+			
+		<h3>MALICIOUS_HOSTS list</h3>
+		<div>
+			<table>
+				<tr>
+					<th>Kind</th>
+					<th>Value</th>
+				</tr>
+			{% for no in malhosts_og_dict.members %}
+				<tr>
+					<th>{{no.kind}}</th>
+					<th>{{no.value}}</th>
+				</tr>
+			{% endfor %}
+			</table>
 		</div>
 	</div>
 </body>
