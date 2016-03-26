@@ -1,0 +1,28 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ASA REST API demo page</title>
+</head>
+
+<body>
+	<div>
+		<h2>ASA ACL Portal Login</h2><br>
+
+		<form method="post" action="{% url 'acl:logging_in' %}">
+			{% csrf_token %}
+			ASA management IP Address: <input type="text" name="ip_address"> <br>
+			username: <input type="text" name="username"> <br>
+			password: <input type="password" name="password"> <br>
+			<br>
+			<button type="submit">login</button><br>
+			<br>
+		</form>
+		
+		<div id="result"></div>	
+	
+	</div>
+</body>
+</html>
+	

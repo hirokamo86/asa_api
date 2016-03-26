@@ -1,0 +1,32 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ASA REST API demo page</title>
+</head>
+
+<body>
+	<div>
+		<h2>ASA IP Address: {{ ip_address }}</h2><br>
+		<div>
+			<table>
+				<tr>
+					<th>line#</th>
+					<th>permit</th>
+					<th>Src</th>
+					<th>Dst</th>
+				</tr>
+			{% for ace in ace_dict.items %}
+				<tr>
+					<th>{{ace.position}}</th>
+					<th>{% if ace.permit %}permit{% else %}{% if not ace.permit %}deny{% endif %}{% endif %}</th>
+					<th>{{ace.sourceService.value}} {{ace.sourceAddress.value}}</th>
+					<th>{{ace.destinationService.value}} {{ace.destinationAddress.value}}</th>
+				</tr>
+			{% endfor %}
+		</div>
+	</div>
+</body>
+</html>
+	
