@@ -25,10 +25,10 @@
 				</tr>
 			{% for ace in outside_ace_dict.items %}
 				<tr>
-					<th>{{ace.position}}</th>
-					<th>{% if ace.permit %}permit{% else %}{% if not ace.permit %}deny{% endif %}{% endif %}</th>
-					<th>{{ace.sourceService.value}} {{ace.sourceAddress.value}}</th>
-					<th>{{ace.destinationService.value}} {% if ace.destinationAddress.value %}{{ace.destinationAddress.value}}{% else %}{% if ace.destinationAddress.objectId %}{{ace.destinationAddress.objectId}}{% endif %}{% endif %}</th>
+					<td>{{ace.position}}</td>
+					<td>{% if ace.permit %}permit{% else %}{% if not ace.permit %}deny{% endif %}{% endif %}</td>
+					<td>{{ace.sourceService.value}} {{ace.sourceAddress.value}}</td>
+					<td>{{ace.destinationService.value}} {% if ace.destinationAddress.value %}{{ace.destinationAddress.value}}{% else %}{% if ace.destinationAddress.objectId %}{{ace.destinationAddress.objectId}}{% endif %}{% endif %}</td>
 				</tr>
 			{% endfor %}
 			</table>
@@ -41,13 +41,28 @@
 				<tr>
 					<th>Kind</th>
 					<th>Value</th>
+					<th></th>
 				</tr>
 			{% for no in malhosts_og_dict.members %}
 				<tr>
-					<th>{{no.kind}}</th>
-					<th>{{no.value}}</th>
+					<td>{{no.kind}}</td>
+					<td>{{no.value}}</td>
+					<td></td>
 				</tr>
 			{% endfor %}
+				<form method="post" action="{% url 'acl:add' %}">
+					{% csrf_token %}
+					<tr>
+						<td>
+							<select name="kind">
+								<option value="IPv4Address">IPv4Address</option>
+								<option value="IPv4Network">IPv4Network</option>
+							</select>
+						</td>
+						<td><input type="text" name="value" required></td>
+						<td><button type="submit">add</button></td>
+					</tr>
+				</form>
 			</table>
 		</div>
 	</div>
