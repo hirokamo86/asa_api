@@ -47,7 +47,14 @@
 				<tr>
 					<td>{{no.kind}}</td>
 					<td>{{no.value}}</td>
-					<td></td>
+					<td>
+						<form method="post" action="{% url 'acl:delete' %}">
+							{% csrf_token %}
+							<input type="hidden" name="kind" value="{{no.kind}}">
+							<input type="hidden" name="value" value="{{no.value}}">
+							<button type="submit">delete</button>
+						</form>
+					</td>
 				</tr>
 			{% endfor %}
 				<form method="post" action="{% url 'acl:add' %}">
@@ -65,6 +72,9 @@
 				</form>
 			</table>
 		</div>
+		<div>
+			<p>{{ msg }}</p>
+		</div>	
 	</div>
 </body>
 </html>

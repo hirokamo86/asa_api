@@ -40,7 +40,9 @@ def add(request):
     return redirect('acl:list')
 
 def delete(request):
-    delete_no()
+    kind = request.POST['kind']
+    value = request.POST['value']
+    delete_no(ip_address, username, password, "MALICIOUS_HOSTS", kind, value)
     return redirect('acl:list')
 
 def logout(request):
@@ -127,5 +129,39 @@ def add_no(ip_address, username, password, og_name, kind, value):
     finally:
         if f:  f.close()
 
-def delete_no():
-    print ""
+def delete_no(ip_address, username, password, og_name, kind, value):
+    
+    headers = {'Content-Type': 'application/json'}
+
+    api_path = "/api/objects/networkobjectgroups/" + og_name
+    url = "https://" + ip_address + api_path
+    f = None
+    
+    put_data = {
+      "members.remove": [
+        {
+          "kind": kind,
+          "value": value
+        }
+      ]
+    }
+    req = urllib2.Request(url, json.dumps(put_data), headers)
+    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    req.add_header("Authorization", "Basic %s" % base64string)   
+    req.get_method = lambda: 'PATCH'
+    try:
+        f = urllib2.urlopen(req)
+        status_code = f.getcode()
+        print "Status code is "+str(status_code)
+        if status_code == 204:
+            return True
+    except urllib2.HTTPError, err:
+        print "Error received from server. HTTP Status code :"+str(err.code)
+        try:
+            json_error = json.loads(err.read())
+            if json_error:
+                print json.dumps(json_error,sort_keys=True,indent=4, separators=(',', ': '))
+        except ValueError:
+            pass
+    finally:
+        if f:  f.close()
