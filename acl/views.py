@@ -53,8 +53,7 @@ def delete(request):
 
 def logout(request):
     delete_token()
-    context = RequestContext(request, {})
-    return render_to_response('acl/login.html', context_instance=context)
+    return redirect('acl:login')
 
 #functions
 def get_ace_dict(nameif):
