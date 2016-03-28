@@ -9,48 +9,55 @@ import urllib2
 ip_address = ''
 username = ''
 password = ''
+token = ''
+msg1 = ''
+msg2 = ''
 
 def login(request):
-    context = RequestContext(request, {})
+    context = RequestContext(request, {'msg': msg1,
+                                       })
     return render_to_response('acl/login.html', context_instance=context)
 
 def logging_in(request):
-    global ip_address, username, password
+    global ip_address, username, password, token
     ip_address = request.POST['ip_address']
     username = request.POST['username']
     password = request.POST['password']
     
-    return redirect('acl:list')
+    if get_token():
+        return redirect('acl:list')
+    else:
+        return redirect('acl:login')
     
 def list(request):
-    outside_ace_dict = get_ace_dict(ip_address, username, password, "outside")
-    malhosts_og_dict = get_og_dict(ip_address, username, password, "MALICIOUS_HOSTS")
+    outside_ace_dict = get_ace_dict("outside")
+    malhosts_og_dict = get_og_dict("MALICIOUS_HOSTS")
     context = RequestContext(request, {'ip_address': ip_address,
-                                       'username': username,
-                                       'password': password,
                                        'outside_ace_dict': outside_ace_dict,
                                        'malhosts_og_dict': malhosts_og_dict,
+                                       'msg': msg2,
                                        })
     return render_to_response('acl/list.html', context_instance=context)
 
 def add(request):
     kind = request.POST['kind']
     value = request.POST['value']
-    add_no(ip_address, username, password, "MALICIOUS_HOSTS", kind, value)
+    add_no("MALICIOUS_HOSTS", kind, value)
     return redirect('acl:list')
 
 def delete(request):
     kind = request.POST['kind']
     value = request.POST['value']
-    delete_no(ip_address, username, password, "MALICIOUS_HOSTS", kind, value)
+    delete_no("MALICIOUS_HOSTS", kind, value)
     return redirect('acl:list')
 
 def logout(request):
+    delete_token()
     context = RequestContext(request, {})
     return render_to_response('acl/login.html', context_instance=context)
 
 #functions
-def get_ace_dict(ip_address, username, password, nameif):
+def get_ace_dict(nameif):
         
     headers = {'Content-Type': 'application/json'}
     
@@ -59,8 +66,7 @@ def get_ace_dict(ip_address, username, password, nameif):
     f = None
     
     req = urllib2.Request(url, None, headers)
-    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
-    req.add_header("Authorization", "Basic %s" % base64string)
+    req.add_header("X-Auth-Token", token)
     try:
         f = urllib2.urlopen(req)
         status_code = f.getcode()
@@ -71,7 +77,7 @@ def get_ace_dict(ip_address, username, password, nameif):
     finally:
         if f:  f.close()
 
-def get_og_dict(ip_address, username, password, og_name):
+def get_og_dict(og_name):
     
     headers = {'Content-Type': 'application/json'}
 
@@ -80,8 +86,7 @@ def get_og_dict(ip_address, username, password, og_name):
     f = None
     
     req = urllib2.Request(url, None, headers)
-    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
-    req.add_header("Authorization", "Basic %s" % base64string)
+    req.add_header("X-Auth-Token", token)
     try:
         f = urllib2.urlopen(req)
         status_code = f.getcode()
@@ -92,7 +97,8 @@ def get_og_dict(ip_address, username, password, og_name):
     finally:
         if f:  f.close()
 
-def add_no(ip_address, username, password, og_name, kind, value):
+def add_no(og_name, kind, value):
+    global msg2
     
     headers = {'Content-Type': 'application/json'}
 
@@ -109,27 +115,22 @@ def add_no(ip_address, username, password, og_name, kind, value):
       ]
     }
     req = urllib2.Request(url, json.dumps(put_data), headers)
-    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
-    req.add_header("Authorization", "Basic %s" % base64string)   
+    req.add_header("X-Auth-Token", token)  
     req.get_method = lambda: 'PATCH'
     try:
         f = urllib2.urlopen(req)
         status_code = f.getcode()
-        print "Status code is "+str(status_code)
         if status_code == 204:
+            msg2 = ''
             return True
     except urllib2.HTTPError, err:
-        print "Error received from server. HTTP Status code :"+str(err.code)
-        try:
-            json_error = json.loads(err.read())
-            if json_error:
-                print json.dumps(json_error,sort_keys=True,indent=4, separators=(',', ': '))
-        except ValueError:
-            pass
+        msg2 =  "Error received from server. HTTP Status code :"+str(err.code)
+        return False
     finally:
         if f:  f.close()
 
-def delete_no(ip_address, username, password, og_name, kind, value):
+def delete_no(og_name, kind, value):
+    global msg2
     
     headers = {'Content-Type': 'application/json'}
 
@@ -146,22 +147,66 @@ def delete_no(ip_address, username, password, og_name, kind, value):
       ]
     }
     req = urllib2.Request(url, json.dumps(put_data), headers)
-    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
-    req.add_header("Authorization", "Basic %s" % base64string)   
+    req.add_header("X-Auth-Token", token)  
     req.get_method = lambda: 'PATCH'
     try:
         f = urllib2.urlopen(req)
         status_code = f.getcode()
         print "Status code is "+str(status_code)
         if status_code == 204:
+            msg2 = ''
             return True
     except urllib2.HTTPError, err:
-        print "Error received from server. HTTP Status code :"+str(err.code)
-        try:
-            json_error = json.loads(err.read())
-            if json_error:
-                print json.dumps(json_error,sort_keys=True,indent=4, separators=(',', ': '))
-        except ValueError:
-            pass
+        msg2 =  "Error received from server. HTTP Status code :"+str(err.code)
+        return False
     finally:
         if f:  f.close()
+
+def get_token():
+    global token, msg1
+    
+    headers = {'Content-Type': 'application/json'}
+
+    api_path = "/api/tokenservices"
+    url = "https://" + ip_address + api_path
+    f = None
+    
+    post_data = ''
+    req = urllib2.Request(url, json.dumps(post_data), headers)
+    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    req.add_header("Authorization", "Basic %s" % base64string)   
+    try:
+        f  = urllib2.urlopen(req)
+        status_code = f.getcode()
+        if status_code == 204:
+            headers = f.info()
+            token = headers.getheader('X-Auth-Token')
+            msg1 = ''
+            return True
+    except urllib2.HTTPError, err:
+        msg1 = "Error received from server. HTTP Status code :"+str(err.code)
+        return False
+    finally:
+        if f:  f.close()
+        
+def delete_token():
+    global token
+    
+    headers = {'Content-Type': 'application/json'}
+
+    api_path = "/api/tokenservices/" + token
+    url = "https://" + ip_address + api_path
+    f = None
+    
+    post_data = ''
+    req = urllib2.Request(url, json.dumps(post_data), headers)
+    req.add_header("X-Auth-Token", token)  
+    req.get_method = lambda: 'DELETE'
+    
+    f  = urllib2.urlopen(req)
+    status_code = f.getcode()
+
+    token = ''
+    if f:  f.close()    
+    
+    

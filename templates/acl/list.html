@@ -10,12 +10,13 @@
 </head>
 
 <body>
-	<div>
-		<h2>ASA IP Address: {{ ip_address }}</h2>
-		<br>
+	<div class="parent">
+		<div class="child">
+			<h2>ASA IP Address: {{ ip_address }}</h2>
+		</div>
 		
-		<h3>Outside Interface ACL</h3>
-		<div>
+		<div class="child">
+			<h3>Outside Interface ACL</h3>
 			<table>
 				<tr>
 					<th>Line#</th>
@@ -33,10 +34,9 @@
 			{% endfor %}
 			</table>
 		</div>
-		<br>
-			
-		<h3>MALICIOUS_HOSTS list</h3>
-		<div>
+
+		<div class="child">			
+			<h3>MALICIOUS_HOSTS list</h3>
 			<table>
 				<tr>
 					<th>Kind</th>
@@ -72,7 +72,15 @@
 				</form>
 			</table>
 		</div>
-		<div>
+		
+		<div class="child">
+			<form method="post" action="{% url 'acl:logout' %}">
+				{% csrf_token %}
+				<button type="submit">logout</button>
+			</form>
+		</div>
+		
+		<div class="child">
 			<p>{{ msg }}</p>
 		</div>	
 	</div>
